@@ -7,6 +7,10 @@
 #property link      "https://www.mql5.com"
 #property version   "1.00"
 
+//+------------------------------------------------------------------+
+//| Include                                                          |
+//+------------------------------------------------------------------+
+
 //--- input parameters
 input ulong ExtCollectTime   =30;  // test time in seconds
 input ulong ExtSkipFirstTicks=10;  // number of ticks skipped at start
@@ -14,6 +18,8 @@ input ulong ExtSkipFirstTicks=10;  // number of ticks skipped at start
 bool book_subscribed=false;
 //--- array for accepting requests from the market depth
 MqlBookInfo  book[];
+MqlBookInfo  x[];
+int BHRSI_handle;
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -21,6 +27,16 @@ int OnInit()
   {
 //--- create timer
    EventSetTimer(60);
+   
+   //CSignalMACD *signal=new CSignalMACD;
+   BHRSI_handle=iCustom(Symbol(),
+                        0,
+                        "\Indicators\Shared Projects\BourseOnSteroid\Indicators\BHRSI",
+                        50,
+                        50,
+                        10,
+                        10
+                        );
    
    //--- show the start
    Comment(StringFormat("Waiting for the first %I64u ticks to arrive",ExtSkipFirstTicks));
@@ -57,12 +73,29 @@ void OnDeinit(const int reason)
 void OnTick()
   {
 //---
+   bool getBook=MarketBookGet(NULL,book);
+   if(getBook)
+     {
+      int size=ArraySize(book);
+      Print("MarketBookInfo for ",Symbol());
+      for(int i=0;i<size;i++)
+        {
+         //Print("OnTick => ", i+":",book[i].price
+         //      +"    Volume = "+book[i].volume,
+         //      " type = ",book[i].type);
+        }
+     }
+   else
+     {
+      //Print("Could not get contents of the symbol DOM ",Symbol());
+     }
+     
    MqlTick last_tick;
    
    if(SymbolInfoTick(Symbol(), last_tick))
      {
-      Print("OnTick called => ", last_tick.time,": Bid = ",last_tick.bid,
-            " Ask = ",last_tick.ask,"  Volume = ",last_tick.volume);
+      //Print("OnTick called => ", last_tick.time,": Bid = ",last_tick.bid,
+      //      " Ask = ",last_tick.ask,"  Volume = ",last_tick.volume);
      }
    else Print("SymbolInfoTick() failed, error = ",GetLastError());
   }
@@ -72,23 +105,7 @@ void OnTick()
 void OnTimer()
   {
 //---
-
-   bool getBook=MarketBookGet(NULL,book);
-   if(getBook)
-     {
-      int size=ArraySize(book);
-      Print("MarketBookInfo for ",Symbol());
-      for(int i=0;i<size;i++)
-        {
-         Print("OnTimer => ", i+":",book[i].price
-               +"    Volume = "+book[i].volume,
-               " type = ",book[i].type);
-        }
-     }
-   else
-     {
-      //Print("Could not get contents of the symbol DOM ",Symbol());
-     }
+  // Print("OnTimer");
   }
 //+------------------------------------------------------------------+
 //| Trade function                                                   |
@@ -161,8 +178,24 @@ void OnChartEvent(const int id,
 void OnBookEvent(const string &symbol)
   {
 //---
-   printf("OnBookEvent!");
+   // printf("OnBookEvent!");
 
+   if(ArraySize(book)>0 && ArraySize(x)>0)
+   {
+   Print("Book: ", book[0].price, book[1].price, book[2].price, book[3].price, book[4].price, book[5].price, book[6].price, book[7].price, book[8].price, book[9].price);
+   Print("x: ", x[0].price, x[1].price, x[2].price, x[3].price, x[4].price, x[5].price, x[6].price, x[7].price, x[8].price, x[9].price);
+   
+   for(int i=0;i<ArraySize(book);i++){
+      if(book[i].price != x[i].price){
+         Print(book[i].price, " - " , x[i].price);
+      }
+      
+   }
+   
+   }
+   
+   ArrayCopy(x,book,0,0,WHOLE_ARRAY);
+  
    static ulong starttime=0;             // test start time 
    static ulong tickcounter=0;           // market depth update counter 
 //--- work with depth market events only if we subscribed to them ourselves 
