@@ -37,12 +37,8 @@ protected:
    int               bhrsi_total_threshold;  // BHRSI Total Threshold
    ENUM_APPLIED_PRICE m_applied;             // the "price series" parameter of the oscillator
    //--- "weights" of market models (0-100)
-   int               m_pattern_0;      // model 0 "the oscillator has required direction"
-   int               m_pattern_1;      // model 1 "reverse of the oscillator to required direction"
-   int               m_pattern_2;      // model 2 "buy signal when a value greater than BHRSIThreshold"
-   int               m_pattern_3;      // model 3 "sell signal when a value lower than -BHRSIThreshold"  
-   int               m_pattern_4;      // model 4 "buy signal when a value greater than BHRSITotalThreshold"
-   int               m_pattern_5;      // model 5 "sell signal when a value lower than -BHRSITotalThreshold"
+   int               m_pattern_0;      // model 0 "BHRSI and BHRSITotal are above bhrsi_threshold and bhrsi_total_threshold"
+
    //--- variables
    double            m_extr_osc[10];   // array of values of extremums of the oscillator
    double            m_extr_pr[10];    // array of values of the corresponding extremums of price
@@ -60,12 +56,7 @@ public:
    void              Applied(ENUM_APPLIED_PRICE value)   { m_applied=value;             }
    //--- methods of adjusting "weights" of market models
    void              Pattern_0(int value)              { m_pattern_0=value;             }
-   void              Pattern_1(int value)              { m_pattern_1=value;             }
-   void              Pattern_2(int value)              { m_pattern_2=value;             }
-   void              Pattern_3(int value)              { m_pattern_3=value;             }
-   
-   void              Pattern_4(int value)              { m_pattern_4=value;             }
-   void              Pattern_5(int value)              { m_pattern_5=value;             }
+
    //--- method of verification of settings
    virtual bool      ValidationSettings(void);
    //--- method of creating the indicator and timeseries
@@ -78,29 +69,32 @@ protected:
    //--- method of initialization of the oscillator
    bool              InitBHRSI(CIndicators *indicators);
    //--- methods of getting data
-   double            Main(int ind)                     { return(m_BHRSI.GetData(0, ind));      }
-   double            Signal(int ind)                   { return(m_BHRSI.GetData(1, ind));    }
-   double            DiffMain(int ind)                 { return(Main(ind)-Main(ind+1));  }
+   double            MainBHRSI(int ind)
+     {
+      float result = m_BHRSI.GetData(0, ind);
+      return result;
+     }
+   double            MainBHRSITotal(int ind)
+     {
+      float result = m_BHRSI.GetData(4, ind);
+      return result;
+     }
+   double            DiffMain(int ind)                 { return(MainBHRSI(ind)-MainBHRSI(ind+1));  }
    int               StateMain(int ind);
-   double            State(int ind) { return(Main(ind)-Signal(ind)); }
+   double            State(int ind) { return(MainBHRSI(ind)-MainBHRSITotal(ind)); }
    bool              ExtState(int ind);
    bool              CompareMaps(int map,int count,bool minimax=false,int start=0);
   };
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
 //+------------------------------------------------------------------+
-CSignalBHRSI::CSignalBHRSI(void) : 
-                                 m_period_bhrsi(10),
-                                 m_period_bhrsi_total(10),
-                                 bhrsi_threshold(50),
-                                 bhrsi_total_threshold(50),
-                                 m_applied(PRICE_CLOSE),
-                                 m_pattern_0(10),
-                                 m_pattern_1(100),
-                                 m_pattern_2(bhrsi_threshold),
-                                 m_pattern_3(-bhrsi_threshold),
-                                 m_pattern_4(bhrsi_total_threshold),
-                                 m_pattern_5(-bhrsi_total_threshold)
+CSignalBHRSI::CSignalBHRSI(void) :
+   m_period_bhrsi(10),
+   m_period_bhrsi_total(10),
+   bhrsi_threshold(50),
+   bhrsi_total_threshold(50),
+   m_applied(PRICE_CLOSE),
+   m_pattern_0(100)
   {
 //--- initialization of protected data
    m_used_series=USE_SERIES_HIGH+USE_SERIES_LOW;
@@ -120,25 +114,25 @@ bool CSignalBHRSI::ValidationSettings(void)
    if(!CExpertSignal::ValidationSettings())
       return(false);
 //--- initial data checks
-   if(bhrsi_threshold<=100 && bhrsi_threshold>=-100)
+   if(bhrsi_threshold>100 && bhrsi_threshold<-100)
      {
       printf(__FUNCTION__+": BHRSI threshold must be between 100 and -100");
       return(false);
      }
-     
-     if(bhrsi_total_threshold<=100 && bhrsi_total_threshold>=-100)
+
+   if(bhrsi_total_threshold>100 && bhrsi_total_threshold<-100)
      {
       printf(__FUNCTION__+": BHRSI total threshold must be between 100 and -100");
       return(false);
      }
-     
-     if(m_period_bhrsi<=0)
+
+   if(m_period_bhrsi<=0)
      {
       printf(__FUNCTION__+": period bhrsi must be greater than 0");
       return(false);
      }
-     
-     if(m_period_bhrsi_total<=0)
+
+   if(m_period_bhrsi_total<=0)
      {
       printf(__FUNCTION__+": period bhrsi total must be greater than 0");
       return(false);
@@ -167,35 +161,36 @@ bool CSignalBHRSI::InitIndicators(CIndicators *indicators)
 //+------------------------------------------------------------------+
 bool CSignalBHRSI::InitBHRSI(CIndicators *indicators)
   {
-    //--- add object to collection
-    if(!indicators.Add(GetPointer(m_BHRSI)))
+//--- add object to collection
+   if(!indicators.Add(GetPointer(m_BHRSI)))
      {
       printf(__FUNCTION__+": error adding object");
       return(false);
      }
-     
-     //--- set parameters of the indicator
-     MqlParam parameters[5];
-   
-    parameters[0].type=TYPE_STRING;
-    parameters[0].string_value="Examples\\MACD.ex5";
-    parameters[1].type=TYPE_INT;
-    parameters[1].integer_value=m_period_bhrsi;
-    parameters[2].type=TYPE_INT;
-    parameters[2].integer_value=m_period_bhrsi_total;
-    parameters[3].type=TYPE_INT;
-    parameters[3].integer_value=bhrsi_threshold;
-    parameters[4].type=TYPE_INT;
-    parameters[4].integer_value=bhrsi_total_threshold;
-      
-   //--- object initialization
-   if(!m_BHRSI.Create(m_symbol.Name(),0,IND_CUSTOM,5,parameters))
+
+//--- set parameters of the indicator
+   MqlParam parameters[5];
+
+   parameters[0].type=TYPE_STRING;
+   parameters[0].string_value="\Indicators\Shared Projects\BourseOnSteroid\Indicators\BHRSI";
+   parameters[1].type=TYPE_INT;
+   parameters[1].integer_value=m_period_bhrsi;
+   parameters[2].type=TYPE_INT;
+   parameters[2].integer_value=m_period_bhrsi_total;
+   parameters[3].type=TYPE_INT;
+   parameters[3].integer_value=bhrsi_threshold;
+   parameters[4].type=TYPE_INT;
+   parameters[4].integer_value=bhrsi_total_threshold;
+
+//--- object initialization
+   if(!m_BHRSI.Create(m_symbol.Name(),0,IND_CUSTOM,4,parameters))
      {
       printf(__FUNCTION__+": error initializing object");
       return(false);
      }
 //--- number of buffers
-   if(!m_BHRSI.NumBuffers(5)) return(false);
+   if(!m_BHRSI.NumBuffers(4))
+      return(false);
 //--- ok
 
    return(true);
@@ -208,9 +203,9 @@ int CSignalBHRSI::StateMain(int ind)
    int    res=0;
    double var;
 //---
-   for(int i=ind;;i++)
+   for(int i=ind;; i++)
      {
-      if(Main(i+1)==EMPTY_VALUE)
+      if(MainBHRSI(i+1)==EMPTY_VALUE)
          break;
       var=DiffMain(i);
       if(res>0)
@@ -267,7 +262,7 @@ bool CSignalBHRSI::ExtState(int ind)
    uint   map;                 // intermediate bit-map for one extremum
 //---
    m_extr_map=0;
-   for(int i=0;i<10;i++)
+   for(int i=0; i<10; i++)
      {
       off=StateMain(pos);
       if(off>0)
@@ -275,7 +270,7 @@ bool CSignalBHRSI::ExtState(int ind)
          //--- minimum of the oscillator is detected
          pos+=off;
          m_extr_pos[i]=pos;
-         m_extr_osc[i]=Main(pos);
+         m_extr_osc[i]=MainBHRSI(pos);
          if(i>1)
            {
             m_extr_pr[i]=m_low.MinValue(pos-2,5,index);
@@ -296,7 +291,7 @@ bool CSignalBHRSI::ExtState(int ind)
          //--- maximum of the oscillator is detected
          pos-=off;
          m_extr_pos[i]=pos;
-         m_extr_osc[i]=Main(pos);
+         m_extr_osc[i]=MainBHRSI(pos);
          if(i>1)
            {
             m_extr_pr[i]=m_high.MaxValue(pos-2,5,index);
@@ -346,7 +341,7 @@ bool CSignalBHRSI::CompareMaps(int map,int count,bool minimax,int start)
    int  i,j;
 //--- loop by extremums (4 minimums and 4 maximums)
 //--- price and the oscillator are checked separately (thus, there are 16 checks)
-   for(i=step*start,j=0;i<total;i+=step,j+=4)
+   for(i=step*start,j=0; i<total; i+=step,j+=4)
      {
       //--- "take" two bits - patter of the corresponding extremum of the price
       inp_map=(map>>j)&3;
@@ -377,35 +372,18 @@ bool CSignalBHRSI::CompareMaps(int map,int count,bool minimax,int start)
 int CSignalBHRSI::LongCondition(void)
   {
    int result=0;
-   int idx   =StartIndex();
+   int idx   =0;
+
 //--- check direction of the main line
-   if(DiffMain(idx)>0.0)
-     {
-      //--- the main line is directed upwards, and it confirms the possibility of price growth
-      if(IS_PATTERN_USAGE(0))
-         result=m_pattern_0;      // "confirming" signal number 0
-      //--- if the model 1 is used, look for a reverse of the main line
-      if(IS_PATTERN_USAGE(1) && DiffMain(idx+1)<0.0)
-         result=m_pattern_1;      // signal number 1
-      //--- if the model 2 is used, look for an intersection of the main and signal line
-      if(IS_PATTERN_USAGE(2) && State(idx)>0.0 && State(idx+1)<0.0)
-         result=m_pattern_2;      // signal number 2
-      //--- if the model 3 is used, look for an intersection of the main line and the zero level
-      if(IS_PATTERN_USAGE(3) && Main(idx)>0.0 && Main(idx+1)<0.0)
-         result=m_pattern_3;      // signal number 3
-      //--- if the models 4 or 5 are used and the main line turned upwards below the zero level, look for divergences
-      if((IS_PATTERN_USAGE(4) || IS_PATTERN_USAGE(5)) && Main(idx)<0.0)
-        {
-         //--- perform the extended analysis of the oscillator state
-         ExtState(idx);
-         //--- if the model 4 is used, look for the "divergence" signal
-         if(IS_PATTERN_USAGE(4) && CompareMaps(1,1)) // 0000 0001b
-            result=m_pattern_4;   // signal number 4
-         //--- if the model 5 is used, look for the "double divergence" signal
-         if(IS_PATTERN_USAGE(5) && CompareMaps(0x11,2)) // 0001 0001b
-            return(m_pattern_5);  // signal number 5
-        }
-     }
+//if(DiffMain(idx)>0.0)
+//{
+   double BHRSI = MainBHRSI(idx);
+   double BHRSITotal = MainBHRSITotal(idx);
+
+//--- the main line is directed upwards, and it confirms the possibility of price growth
+   if(IS_PATTERN_USAGE(0) &&  BHRSI>=bhrsi_threshold && MainBHRSITotal(idx)>=bhrsi_total_threshold)
+      result=MathCeil((BHRSI+BHRSITotal)/2);      // "confirming" signal number 0
+//}
 //--- return the result
    return(result);
   }
@@ -415,35 +393,18 @@ int CSignalBHRSI::LongCondition(void)
 int CSignalBHRSI::ShortCondition(void)
   {
    int result=0;
-   int idx   =StartIndex();
+   int idx   =0;
 //--- check direction of the main line
-   if(DiffMain(idx)<0.0)
-     {
+   //if(DiffMain(idx)<0.0)
+   //  {
+      double BHRSI = MainBHRSI(idx);
+      double BHRSITotal = MainBHRSITotal(idx);
+   
       //--- main line is directed downwards, confirming a possibility of falling of price
-      if(IS_PATTERN_USAGE(0))
-         result=m_pattern_0;      // "confirming" signal number 0
-      //--- if the model 1 is used, look for a reverse of the main line
-      if(IS_PATTERN_USAGE(1) && DiffMain(idx+1)>0.0)
-         result=m_pattern_1;      // signal number 1
-      //--- if the model 2 is used, look for an intersection of the main and signal line
-      if(IS_PATTERN_USAGE(2) && State(idx)<0.0 && State(idx+1)>0.0)
-         result=m_pattern_2;      // signal number 2
-      //--- if the model 3 is used, look for an intersection of the main line and the zero level
-      if(IS_PATTERN_USAGE(3) && Main(idx)<0.0 && Main(idx+1)>0.0)
-         result=m_pattern_3;      // signal number 3
-      //--- if the models 4 or 5 are used and the main line turned downwards above the zero level, look for divergences
-      if((IS_PATTERN_USAGE(4) || IS_PATTERN_USAGE(5)) && Main(idx)>0.0)
-        {
-         //--- perform the extended analysis of the oscillator state
-         ExtState(idx);
-         //--- if the model 4 is used, look for the "divergence" signal
-         if(IS_PATTERN_USAGE(4) && CompareMaps(1,1)) // 0000 0001b
-            result=m_pattern_4;   // signal number 4
-         //--- if the model 5 is used, look for the "double divergence" signal
-         if(IS_PATTERN_USAGE(5) && CompareMaps(0x11,2)) // 0001 0001b
-            return(m_pattern_5);  // signal number 5
-        }
-     }
+      if(IS_PATTERN_USAGE(0) &&  BHRSI<=bhrsi_threshold && BHRSITotal<=bhrsi_total_threshold)
+         result=-1 * (100 - MathCeil((BHRSI+BHRSITotal)/2));      // "confirming" signal number 0
+
+   //  }
 //--- return the result
    return(result);
   }

@@ -76,12 +76,12 @@ int OnInit()
 //--- Creating filter CSignalBHRSI
    CSignalBHRSI *filter0=new CSignalBHRSI;
    if(filter0==NULL)
-     {
-      //--- failed
-      printf(__FUNCTION__+": error creating filter0");
-      ExtExpert.Deinit();
-      return(INIT_FAILED);
-     }
+   {
+     //--- failed
+     printf(__FUNCTION__+": error creating filter0");
+     ExtExpert.Deinit();
+     return(INIT_FAILED);
+   }
    signal.AddFilter(filter0);
 //--- Set filter parameters
    filter0.PeriodBHRSI(Signal_BHRSI_PeriodBHRSI);
@@ -146,7 +146,7 @@ int OnInit()
 //--- ok
    return(INIT_SUCCEEDED);
   }
-//+------------------------------------------------------------------+
+//+------------------------------------------------------------------+  
 //| Deinitialization function of the expert                          |
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
