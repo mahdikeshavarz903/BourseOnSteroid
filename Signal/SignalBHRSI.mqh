@@ -44,6 +44,7 @@ protected:
    double            m_extr_pr[10];    // array of values of the corresponding extremums of price
    int               m_extr_pos[10];   // array of shifts of extremums (in bars)
    uint              m_extr_map;       // resulting bit-map of ratio of extremums of the oscillator and the price
+   int BHRSI_handle;
 
 public:
                      CSignalBHRSI(void);
@@ -56,7 +57,7 @@ public:
    void              Applied(ENUM_APPLIED_PRICE value)   { m_applied=value;             }
    //--- methods of adjusting "weights" of market models
    void              Pattern_0(int value)              { m_pattern_0=value;             }
-
+   
    //--- method of verification of settings
    virtual bool      ValidationSettings(void);
    //--- method of creating the indicator and timeseries
@@ -71,11 +72,32 @@ protected:
    //--- methods of getting data
    double            MainBHRSI(int ind)
      {
-      float result = m_BHRSI.GetData(0, ind);
+     int rates_total = Bars(_Symbol,PERIOD_M1);
+                        
+      //double list[];
+      //ArrayResize(list, rates_total);
+      
+      m_BHRSI.Refresh();
+       
+      //CopyBuffer(BHRSI_handle, 0, 0, rates_total, list);
+      
+      float result = m_BHRSI.GetData(0, ind);      
+      
+      //return list[ArraySize(list)-1];
       return result;
      }
    double            MainBHRSITotal(int ind)
      {
+      int rates_total = Bars(_Symbol,PERIOD_M1);
+                        
+      //double list[];
+      //ArrayResize(list, rates_total);
+
+      m_BHRSI.Refresh();         
+      
+      //CopyBuffer(BHRSI_handle, 4, 0, rates_total-1, list);
+      //return list[ArraySize(list)-1];
+      
       float result = m_BHRSI.GetData(4, ind);
       return result;
      }
@@ -98,6 +120,16 @@ CSignalBHRSI::CSignalBHRSI(void) :
   {
 //--- initialization of protected data
    m_used_series=USE_SERIES_HIGH+USE_SERIES_LOW;
+   
+    BHRSI_handle =iCustom(Symbol(),
+                        0,
+                        "\Indicators\Shared Projects\BourseOnSteroid\Indicators\BHRSI",
+                        50,
+                        50,
+                        10,
+                        10
+                        );
+
   }
 //+------------------------------------------------------------------+
 //| Destructor                                                       |
@@ -114,13 +146,13 @@ bool CSignalBHRSI::ValidationSettings(void)
    if(!CExpertSignal::ValidationSettings())
       return(false);
 //--- initial data checks
-   if(bhrsi_threshold>100 && bhrsi_threshold<-100)
+   if(bhrsi_threshold>100 && bhrsi_threshold<0)
      {
       printf(__FUNCTION__+": BHRSI threshold must be between 100 and -100");
       return(false);
      }
 
-   if(bhrsi_total_threshold>100 && bhrsi_total_threshold<-100)
+   if(bhrsi_total_threshold>100 && bhrsi_total_threshold<0)
      {
       printf(__FUNCTION__+": BHRSI total threshold must be between 100 and -100");
       return(false);
@@ -183,13 +215,13 @@ bool CSignalBHRSI::InitBHRSI(CIndicators *indicators)
    parameters[4].integer_value=bhrsi_total_threshold;
 
 //--- object initialization
-   if(!m_BHRSI.Create(m_symbol.Name(),0,IND_CUSTOM,4,parameters))
+   if(!m_BHRSI.Create(m_symbol.Name(),0,IND_CUSTOM,5,parameters))
      {
       printf(__FUNCTION__+": error initializing object");
       return(false);
      }
 //--- number of buffers
-   if(!m_BHRSI.NumBuffers(4))
+   if(!m_BHRSI.NumBuffers(5))
       return(false);
 //--- ok
 
@@ -379,7 +411,9 @@ int CSignalBHRSI::LongCondition(void)
 //{
    double BHRSI = MainBHRSI(idx);
    double BHRSITotal = MainBHRSITotal(idx);
-
+   
+   Print("* BHRSI: ", BHRSI, "BHRSITotal: ", BHRSITotal);
+   
 //--- the main line is directed upwards, and it confirms the possibility of price growth
    if(IS_PATTERN_USAGE(0) &&  BHRSI>=bhrsi_threshold && MainBHRSITotal(idx)>=bhrsi_total_threshold)
       result=MathCeil((BHRSI+BHRSITotal)/2);      // "confirming" signal number 0
