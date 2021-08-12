@@ -24,8 +24,8 @@ input string             Expert_Title                    ="ExpertBHRSI"; // Docu
 ulong                    Expert_MagicNumber              =1330;          //
 bool                     Expert_EveryTick                =false;         //
 //--- inputs for main signal
-input int                Signal_ThresholdOpen            =50;            // Signal threshold value to open [0...100]
-input int                Signal_ThresholdClose           =50;            // Signal threshold value to close [0...100]
+input int                Signal_ThresholdOpen            =10;            // Signal threshold value to open [0...100]
+input int                Signal_ThresholdClose           =10;            // Signal threshold value to close [0...100]
 input double             Signal_PriceLevel               =0.0;           // Price level to execute a deal
 input double             Signal_StopLevel                =50.0;          // Stop Loss level (in points)
 input double             Signal_TakeLevel                =50.0;          // Take Profit level (in points)
