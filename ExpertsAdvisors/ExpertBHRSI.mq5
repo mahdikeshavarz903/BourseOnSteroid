@@ -32,8 +32,8 @@ input double             Signal_TakeLevel                =50.0;          // Take
 input int                Signal_Expiration               =4;             // Expiration of pending orders (in bars)
 input int                Signal_BHRSI_PeriodBHRSI        =10;            // BHRSI(10,10,50,50,...) Period of calculation
 input int                Signal_BHRSI_PeriodBHRSITotal   =10;            // BHRSI(10,10,50,50,...) Period of calculation
-input int                Signal_BHRSI_BhrsiThreshold     =50;            // BHRSI(10,10,50,50,...) BHRSI threshold
-input int                Signal_BHRSI_BhrsiTotalThreshold=50;            // BHRSI(10,10,50,50,...) BHRSI total threshold
+input int                Signal_BHRSI_BhrsiThreshold     =70;            // BHRSI(10,10,50,50,...) BHRSI threshold
+input int                Signal_BHRSI_BhrsiTotalThreshold=70;            // BHRSI(10,10,50,50,...) BHRSI total threshold
 input ENUM_APPLIED_PRICE Signal_BHRSI_Applied            =PRICE_CLOSE;   // BHRSI(10,10,50,50,...) Prices series
 input double             Signal_BHRSI_Weight             =1.0;           // BHRSI(10,10,50,50,...) Weight [0...1.0]
 //--- inputs for money
