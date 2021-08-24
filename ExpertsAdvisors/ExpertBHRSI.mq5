@@ -48,6 +48,9 @@ CExpert ExtExpert;
 //+------------------------------------------------------------------+
 int OnInit()
   {
+    EventSetTimer(1);
+    ExtExpert.OnTimerProcess(true);
+    
 //--- Initializing expert
    if(!ExtExpert.Init(Symbol(),Period(),Expert_EveryTick,Expert_MagicNumber))
      {
@@ -74,14 +77,15 @@ int OnInit()
    signal.TakeLevel(Signal_TakeLevel);
    signal.Expiration(Signal_Expiration);
 //--- Creating filter CSignalBHRSI
+   
    CSignalBHRSI *filter0=new CSignalBHRSI;
    if(filter0==NULL)
-   {
-     //--- failed
-     printf(__FUNCTION__+": error creating filter0");
-     ExtExpert.Deinit();
-     return(INIT_FAILED);
-   }
+     {
+      //--- failed
+      printf(__FUNCTION__+": error creating filter0");
+      ExtExpert.Deinit();
+      return(INIT_FAILED);
+     }
    signal.AddFilter(filter0);
 //--- Set filter parameters
    filter0.PeriodBHRSI(Signal_BHRSI_PeriodBHRSI);
@@ -90,6 +94,7 @@ int OnInit()
    filter0.BhrsiTotalThreshold(Signal_BHRSI_BhrsiTotalThreshold);
    filter0.Applied(Signal_BHRSI_Applied);
    filter0.Weight(Signal_BHRSI_Weight);
+
 //--- Creation of trailing object
    CTrailingNone *trailing=new CTrailingNone;
    if(trailing==NULL)
@@ -146,11 +151,12 @@ int OnInit()
 //--- ok
    return(INIT_SUCCEEDED);
   }
-//+------------------------------------------------------------------+  
+//+------------------------------------------------------------------+
 //| Deinitialization function of the expert                          |
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
   {
+   EventKillTimer();
    ExtExpert.Deinit();
   }
 //+------------------------------------------------------------------+
@@ -171,7 +177,8 @@ void OnTrade()
 //| "Timer" event handler function                                   |
 //+------------------------------------------------------------------+
 void OnTimer()
-  {
+  {  
+   
    ExtExpert.OnTimer();
   }
 //+------------------------------------------------------------------+
