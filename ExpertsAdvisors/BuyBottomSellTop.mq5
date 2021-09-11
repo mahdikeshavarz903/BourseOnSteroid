@@ -6,6 +6,7 @@
 #property copyright "Copyright 2021, MetaQuotes Ltd."
 #property link      "https://www.mql5.com"
 #property version   "1.00"
+
 //+------------------------------------------------------------------+
 //| Include                                                          |
 //+------------------------------------------------------------------+
@@ -17,43 +18,56 @@
 #include <Expert\Trailing\TrailingNone.mqh>
 //--- available money management
 #include <Expert\Money\MoneyFixedLot.mqh>
+#include <../Shared Projects/BourseOnSteroid/CustomFiles/BuyBottomSellTopExpert.mqh>
+//#include <../Shared Projects/BourseOnSteroid/Indicators/BHRSI.mqh>
+//#include <../Shared Projects/BourseOnSteroid/Indicators/GlobalCustomBHRSI.mqh>
+#include "../Indicators/GlobalCustomBHRSI.mqh"
+
+ 
+//#import "../Indicators/Shared Projects/BourseOnSteroid/Indicators/BHRSI.ex5"
+//void CustomOnTimer(int n);
+//#import
+
 //+------------------------------------------------------------------+
 //| Inputs                                                           |
 //+------------------------------------------------------------------+
 //--- inputs for expert
 input string             Expert_Title                          ="Expert";    // Document name
 ulong                    Expert_MagicNumber                    =24510;       //
-bool                     Expert_EveryTick                      =false;       //
+bool                     Expert_EveryTick                      =true;       //
 //--- inputs for main signal
 input int                Signal_ThresholdOpen                  =10;          // Signal threshold value to open [0...100]
 input int                Signal_ThresholdClose                 =10;          // Signal threshold value to close [0...100]
 input double             Signal_PriceLevel                     =0.0;         // Price level to execute a deal
-input double             Signal_StopLevel                      =50.0;        // Stop Loss level (in points)
-input double             Signal_TakeLevel                      =50.0;        // Take Profit level (in points)
+input double             Signal_StopLevel                      =20.0;        // Stop Loss level (in points)
+input double             Signal_TakeLevel                      =20.0;        // Take Profit level (in points)
 input int                Signal_Expiration                     =4;           // Expiration of pending orders (in bars)
 input int                Signal_BHRSI_PeriodBHRSI              =10;          // BHRSI(10,10,50,50,...) Period of calculation
 input int                Signal_BHRSI_PeriodBHRSITotal         =10;          // BHRSI(10,10,50,50,...) Period of calculation
-input int                Signal_BHRSI_BhrsiThreshold           =50;          // BHRSI(10,10,50,50,...) BHRSI threshold
-input int                Signal_BHRSI_BhrsiTotalThreshold      =50;          // BHRSI(10,10,50,50,...) BHRSI total threshold
+input int                Signal_BHRSI_BhrsiThreshold           =70;          // BHRSI(10,10,50,50,...) BHRSI threshold
+input int                Signal_BHRSI_BhrsiTotalThreshold      =70;          // BHRSI(10,10,50,50,...) BHRSI total threshold
 input ENUM_APPLIED_PRICE Signal_BHRSI_Applied                  =PRICE_CLOSE; // BHRSI(10,10,50,50,...) Prices series
 input double             Signal_BHRSI_Weight                   =1.0;         // BHRSI(10,10,50,50,...) Weight [0...1.0]
 input int                Signal_LR_periodLinearRegression      =10;          // LinearRegression(10,50,50,...) Period of calculation
-input int                Signal_LR_SellerVanishingTimeThreshold=50;          // LinearRegression(10,50,50,...) Seller vanishing time threshold
-input int                Signal_LR_BuyerVanishingTimeThreshold =50;          // LinearRegression(10,50,50,...) Buyer vanishing time threshold
+input int                Signal_LR_SellerVanishingTimeThreshold=5;          // LinearRegression(10,50,50,...) Seller vanishing time threshold
+input int                Signal_LR_BuyerVanishingTimeThreshold =5;          // LinearRegression(10,50,50,...) Buyer vanishing time threshold
 input ENUM_APPLIED_PRICE Signal_LR_Applied                     =PRICE_CLOSE; // LinearRegression(10,50,50,...) Prices series--------------------------------------------------
 input double             Signal_LR_Weight                      =1.0;         // LinearRegression(10,50,50,...) Weight [0...1.0]
 //--- inputs for money
 input double             Money_FixLot_Percent                  =10.0;        // Percent
-input double             Money_FixLot_Lots                     =1;         // Fixed volume
+input double             Money_FixLot_Lots                     =600;         // Fixed volume
 //+------------------------------------------------------------------+
 //| Global expert object                                             |
 //+------------------------------------------------------------------+
-CExpert ExtExpert;
+CBuyBottomSellTopExpert ExtExpert;
 //+------------------------------------------------------------------+
 //| Initialization function of the expert                            |
 //+------------------------------------------------------------------+
 int OnInit()
-  {
+  {    
+    EventSetTimer(1);
+    ExtExpert.OnTimerProcess(true);
+    
 //--- Initializing expert
    if(!ExtExpert.Init(Symbol(),Period(),Expert_EveryTick,Expert_MagicNumber))
      {
@@ -157,6 +171,9 @@ int OnInit()
       ExtExpert.Deinit();
       return(INIT_FAILED);
      }
+     
+     CIndicators indicators;
+     
 //--- Tuning of all necessary indicators
    if(!ExtExpert.InitIndicators())
      {
@@ -165,6 +182,15 @@ int OnInit()
       ExtExpert.Deinit();
       return(INIT_FAILED);
      }
+     
+     //CiCustom *c = (CiCustom *) indicators.At(3);
+     //c.bhrsiCalculation();
+     
+     //customBHRSI = indicators.At(3);
+          
+     //int x = customBHRSI.GetBHRSICloseBuffer(0);
+     //customBHRSI.DoOnInit(10, 10, 70, 70);
+     
 //--- ok
    return(INIT_SUCCEEDED);
   }
@@ -195,5 +221,6 @@ void OnTrade()
 void OnTimer()
   {
    ExtExpert.OnTimer();
+   //customBHRSI.DoOnTimer(); 
   }
 //+------------------------------------------------------------------+
