@@ -28,7 +28,7 @@ private:
    int               m_yCoordinate;
    int               m_volume;
    double            m_price;
-   int               m_pricePercentage;
+   double            m_pricePercentage;
    int               m_sellerVol;
    int               m_buyerVol;
    int               m_domRowId;
@@ -36,9 +36,9 @@ private:
    int               m_bidVol;
    int               m_askVol;
 public:
-                     CMainTable();
+                     CMainTable(double pricePercentage);
    void              SetBookCell(CBookCell &bookCell, int index);
-   void              GetBookCell(CBookCell &bookCell, int index);
+   void              GetBookCell(CBookCell &bookCell, int index, double pricePercentage);
 
    void              SetCoordinate(int xCoordinate, int yCoordinate)
      {
@@ -68,22 +68,22 @@ public:
 
    void              SetPrice(double price)
      {
-      m_pricePercentage = price;
+      m_price = price;
      }
 
    int               GetPrice()
      {
-      return m_pricePercentage;
-     }
-
-   void              SetPricePercentage(int pricePercentage)
-     {
-      m_price = pricePercentage;
-     }
-
-   int               GetPricePercentage()
-     {
       return m_price;
+     }
+
+   void              SetPricePercentage(double pricePercentage)
+     {
+      m_pricePercentage = pricePercentage;
+     }
+
+   double               GetPricePercentage()
+     {
+      return m_pricePercentage;
      }
 
    void              SetSellerVolume(int sellerVol)
@@ -147,7 +147,7 @@ public:
      }
   };
 //+------------------------------------------------------------------+
-CMainTable::CMainTable(void)
+CMainTable::CMainTable(double pricePercentage)
   {
    string str[] = {"volume", "price", "pricePercentage", "bidVol", "sellerVol", "buyerVol", "askVol"};
 
@@ -156,12 +156,13 @@ CMainTable::CMainTable(void)
       CBookCell *bookCell;
 
       if(i==1)
-         bookCell = new CBookCell(0, 0,0,0,0, 0, str[i]);
-      else
-         if(i==2)
-            bookCell = new CBookCell(2, 0,0,0,0, str[i]);
+            bookCell = new CBookCell(0, 0, 0, 0.0, 0, str[i]);
          else
-            bookCell = new CBookCell(1, 0,0,0, 0,str[i]);
+            if(i==2)
+               bookCell = new CBookCell(2, 0, 0, pricePercentage, 0, str[i]);
+            else
+               bookCell = new CBookCell(1, 0, 0, 0, 0, str[i]);
+
 
       m_bookCell.Add(GetPointer(bookCell));
 
@@ -180,7 +181,7 @@ void  CMainTable::SetBookCell(CBookCell &bookCell, int index)
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-void  CMainTable::GetBookCell(CBookCell &bookCell, int index)
+void  CMainTable::GetBookCell(CBookCell &bookCell, int index, double pricePercentage)
   {
    if(m_bookCell.Available())
      {
@@ -196,12 +197,12 @@ void  CMainTable::GetBookCell(CBookCell &bookCell, int index)
 
          CBookCell *newBookCell;
          if(index==1)
-            newBookCell = new CBookCell(0, 0,0,0,0, 0, str[index]);
+            newBookCell = new CBookCell(0, 0, 0, 0.0, 0, str[index]);
          else
             if(index==2)
-               newBookCell = new CBookCell(2, 0,0,0, 0, str[index]);
+               newBookCell = new CBookCell(2, 0, 0, pricePercentage, 0, str[index]);
             else
-               newBookCell = new CBookCell(1, 0,0,0, 0, str[index]);
+               newBookCell = new CBookCell(1, 0, 0, 0, 0, str[index]);
 
          SetBookCell(newBookCell, index);
 
