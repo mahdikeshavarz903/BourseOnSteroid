@@ -8,6 +8,15 @@
 
 #include <Arrays\ArrayObj.mqh>
 #include "MBookCell.mqh"
+
+const int VOLUME_COLUMN=0;
+const int PRICE_COLUMN=1;
+const int PRICE_PERCENTAGE_COLUMN=2;
+const int BID_COLUMN=3;
+const int SELLER_COLUMN=4;
+const int BUYER_COLUMN=5;
+const int ASK_COLUMN=6;
+const int TOTAL_COLUMN=7;
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -19,6 +28,7 @@ private:
    int               m_yCoordinate;
    int               m_volume;
    double            m_price;
+   int               m_pricePercentage;
    int               m_sellerVol;
    int               m_buyerVol;
    int               m_domRowId;
@@ -58,10 +68,20 @@ public:
 
    void              SetPrice(double price)
      {
-      m_price = price;
+      m_pricePercentage = price;
      }
 
    int               GetPrice()
+     {
+      return m_pricePercentage;
+     }
+
+   void              SetPricePercentage(int pricePercentage)
+     {
+      m_price = pricePercentage;
+     }
+
+   int               GetPricePercentage()
      {
       return m_price;
      }
@@ -129,21 +149,24 @@ public:
 //+------------------------------------------------------------------+
 CMainTable::CMainTable(void)
   {
-      string str[] = {"volume", "price", "bidVol", "sellerVol", "buyerVol", "askVol"};
-      
-      for(int i=0;i<6;i++)
-      {
-         CBookCell *bookCell;
-         
-         if(i==1)
-            bookCell = new CBookCell(0, 0,0,0,0, 0, str[i]);
+   string str[] = {"volume", "price", "pricePercentage", "bidVol", "sellerVol", "buyerVol", "askVol"};
+
+   for(int i=0; i<TOTAL_COLUMN; i++)
+     {
+      CBookCell *bookCell;
+
+      if(i==1)
+         bookCell = new CBookCell(0, 0,0,0,0, 0, str[i]);
+      else
+         if(i==2)
+            bookCell = new CBookCell(2, 0,0,0,0, str[i]);
          else
-            bookCell = new CBookCell(1, 0,0,0,0, 0,str[i]);    
-            
-         m_bookCell.Add(GetPointer(bookCell));
-         
-      }
-         
+            bookCell = new CBookCell(1, 0,0,0, 0,str[i]);
+
+      m_bookCell.Add(GetPointer(bookCell));
+
+     }
+
   }
 
 //+------------------------------------------------------------------+
@@ -151,7 +174,7 @@ CMainTable::CMainTable(void)
 //+------------------------------------------------------------------+
 void  CMainTable::SetBookCell(CBookCell &bookCell, int index)
   {
-      m_bookCell.Update(index, GetPointer(bookCell));
+   m_bookCell.Update(index, GetPointer(bookCell));
   }
 
 //+------------------------------------------------------------------+
@@ -162,7 +185,28 @@ void  CMainTable::GetBookCell(CBookCell &bookCell, int index)
    if(m_bookCell.Available())
      {
       CBookCell *cell = m_bookCell.At(index);
-      bookCell = GetPointer(cell);
+
+      if(CheckPointer(cell)!=POINTER_INVALID)
+        {
+         bookCell = GetPointer(cell);
+        }
+      else
+        {
+         string str[] = {"volume", "price", "pricePercentage", "bidVol", "sellerVol", "buyerVol", "askVol"};
+
+         CBookCell *newBookCell;
+         if(index==1)
+            newBookCell = new CBookCell(0, 0,0,0,0, 0, str[index]);
+         else
+            if(index==2)
+               newBookCell = new CBookCell(2, 0,0,0, 0, str[index]);
+            else
+               newBookCell = new CBookCell(1, 0,0,0, 0, str[index]);
+
+         SetBookCell(newBookCell, index);
+
+         bookCell = GetPointer(newBookCell);
+        }
      }
 
   }

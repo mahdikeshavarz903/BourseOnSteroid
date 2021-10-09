@@ -5,8 +5,10 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2021, MetaQuotes Ltd."
 #property link      "https://www.mql5.com"
-
+#include <Generic/HashMap.mqh>
 #include "MainTable.mqh"
 
-CMainTable *cMainTable[];
+//CMainTable *cMainTable[];
+CHashMap<double,CMainTable *>cMainTable;
+CHashMap<int,double>mapDomRowIdToPrice;
 CMainTable *cOldMainTable[];
