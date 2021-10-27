@@ -11,4 +11,5 @@
 //CMainTable *cMainTable[];
 CHashMap<double,CMainTable *>cMainTable;
 CHashMap<int,double>mapDomRowIdToPrice;
+CHashMap<double, int>mapPriceToDomRowId;
 CMainTable *cOldMainTable[];
