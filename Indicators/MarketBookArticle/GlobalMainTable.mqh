@@ -7,7 +7,7 @@
 #property link      "https://www.mql5.com"
 #include <Generic/HashMap.mqh>
 #include "MainTable.mqh"
-
+ 
 //CMainTable *cMainTable[];
 CHashMap<double,CMainTable *>cMainTable;
 CHashMap<int,double>mapDomRowIdToPrice;
