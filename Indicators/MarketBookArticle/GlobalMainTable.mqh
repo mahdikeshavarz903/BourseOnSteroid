@@ -11,3 +11,6 @@
 CHashMap<double,CMainTable *>cMainTable;
 CHashMap<int,double>mapDomRowIdToPrice;
 CHashMap<double, int>mapPriceToDomRowId;   
+
+int  globalSellerPower=0, globalBuyerPower=0;
+int  globalSnapshotBidPower=0, globalSnapshotAskPower=0;
