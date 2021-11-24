@@ -9,14 +9,18 @@
 #include <Arrays\ArrayObj.mqh>
 #include "MBookCell.mqh"
 
-const int VOLUME_COLUMN=0;
-const int PRICE_COLUMN=1;
-const int PRICE_PERCENTAGE_COLUMN=2;
-const int BID_COLUMN=3;
-const int SELLER_COLUMN=4;
-const int BUYER_COLUMN=5;
-const int ASK_COLUMN=6;
-const int TOTAL_COLUMN=7;
+const int LOSS_PROFIT_COLUMN=0;
+const int VOLUME_COLUMN=1;
+const int PRICE_COLUMN=2;
+const int PRICE_PERCENTAGE_COLUMN=3;
+const int SNAPSHOT_BID_COLUMN=4;
+const int BID_COLUMN=5;
+const int SELLER_COLUMN=6;
+const int BUYER_COLUMN=7;
+const int ASK_COLUMN=8;
+const int SNAPSHOT_ASK_COLUMN=9;
+
+const int TOTAL_COLUMN=10;
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -35,15 +39,38 @@ private:
    int               m_type;
    int               m_bidVol;
    int               m_askVol;
+   int               m_snapshotBid;
+   int               m_snapshotAsk;
+   string            m_lossProfit;
 public:
                      CMainTable(double pricePercentage);
    void              SetBookCell(CBookCell &bookCell, int index);
    void              GetBookCell(CBookCell &bookCell, int index, double pricePercentage);
 
+   void              SetSnapshotBid(int snapshotBid)
+     {
+      m_snapshotBid = snapshotBid;
+     }
+
+   int               GetSnapshotBid()
+     {
+      return m_snapshotBid;
+     }
+
+   void              SetSnapshotAsk(int snapshotAsk)
+     {
+      m_snapshotAsk = snapshotAsk;
+     }
+
    void              SetCoordinate(int xCoordinate, int yCoordinate)
      {
       m_xCoordinate = xCoordinate;
       m_yCoordinate = yCoordinate;
+     }
+
+   int               GetSnapshotAsk()
+     {
+      return m_snapshotAsk;
      }
 
    int               GetXCoordinate()
@@ -145,20 +172,33 @@ public:
      {
       return m_askVol;
      }
+
+   void              SetLossProfit(string lossProfit)
+     {
+      m_lossProfit = lossProfit;
+     }
+
+   string               GetLossProfit()
+     {
+      return m_lossProfit;
+     }
   };
 //+------------------------------------------------------------------+
 CMainTable::CMainTable(double pricePercentage)
   {
-   string str[] = {"volume", "price", "pricePercentage", "bidVol", "sellerVol", "buyerVol", "askVol"};
+   string str[] = {"lossProfit", "volume", "price", "pricePercentage", "snapshotBid", "bidVol", "sellerVol", "buyerVol", "askVol", "snapshotAsk"};
 
    for(int i=0; i<TOTAL_COLUMN; i++)
      {
       CBookCell *bookCell;
 
-      if(i==1)
+      if(i==LOSS_PROFIT_COLUMN)
+         bookCell = new CBookCell(3, 0, 0, "", 3, str[i]);
+      else
+         if(i==PRICE_COLUMN)
             bookCell = new CBookCell(0, 0, 0, 0.0, 0, str[i]);
          else
-            if(i==2)
+            if(i==PRICE_PERCENTAGE_COLUMN)
                bookCell = new CBookCell(2, 0, 0, pricePercentage, 0, str[i]);
             else
                bookCell = new CBookCell(1, 0, 0, 0, 0, str[i]);
@@ -193,16 +233,19 @@ void  CMainTable::GetBookCell(CBookCell &bookCell, int index, double pricePercen
         }
       else
         {
-         string str[] = {"volume", "price", "pricePercentage", "bidVol", "sellerVol", "buyerVol", "askVol"};
+         string str[] = {"lossProfit", "volume", "price", "pricePercentage", "snapshotBid", "bidVol", "sellerVol", "buyerVol", "askVol", "snapshotAsk"};
 
          CBookCell *newBookCell;
-         if(index==1)
-            newBookCell = new CBookCell(0, 0, 0, 0.0, 0, str[index]);
+         if(index==LOSS_PROFIT_COLUMN)
+            newBookCell = new CBookCell(3, 0, 0, "0.00", 0, str[index]);
          else
-            if(index==2)
-               newBookCell = new CBookCell(2, 0, 0, pricePercentage, 0, str[index]);
+            if(index==PRICE_COLUMN)
+               newBookCell = new CBookCell(0, 0, 0, 0.0, 0, str[index]);
             else
-               newBookCell = new CBookCell(1, 0, 0, 0, 0, str[index]);
+               if(index==PRICE_PERCENTAGE_COLUMN)
+                  newBookCell = new CBookCell(2, 0, 0, pricePercentage, 0, str[index]);
+               else
+                  newBookCell = new CBookCell(1, 0, 0, 0, 0, str[index]);
 
          SetBookCell(newBookCell, index);
 

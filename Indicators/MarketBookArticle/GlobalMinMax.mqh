@@ -23,6 +23,7 @@ struct MinMax
    Volume pendingVolume;
    Volume buyerSellerVolume;
    Volume totalVolume;
+   Volume snapshotsVolume;
 };
 
 MinMax minMaxStruct;
